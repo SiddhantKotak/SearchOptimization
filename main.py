@@ -18,7 +18,7 @@ warnings.filterwarnings("ignore")
 # CONFIG
 # ----------------------
 ES_HOST = "http://localhost:9200"
-INDEX = "clothing_products_enhanced"
+INDEX = "clothing_products_search"
 MODEL_NAME = "all-mpnet-base-v2"   # 768-dim for semantic vectors
 DIMS = 768
 TFIDF_DIMS = 1000  # TF-IDF vector dimensions
@@ -177,11 +177,9 @@ def create_elasticsearch_client(max_retries=3):
                 ["https://localhost:9200"],
                 basic_auth=("elastic", "tTj8lpPblyAsfrM-64RJ"),
                 verify_certs=False,
-                timeout=60,  # Increase timeout to 60 seconds
-                max_timeout=120,
+                request_timeout=60,  # This is the correct parameter name
                 retry_on_timeout=True,
-                http_compress=True,
-                request_timeout=60
+                http_compress=True
             )
             # Test connection
             es.info()
@@ -194,7 +192,7 @@ def create_elasticsearch_client(max_retries=3):
                 time.sleep(5)
             else:
                 raise Exception(f"Failed to connect to Elasticsearch after {max_retries} attempts")
-
+            
 es = create_elasticsearch_client()
 
 # ----------------------
@@ -342,8 +340,6 @@ def robust_bulk_index(df, ids, similar_embeddings, exact_embeddings, comp_embedd
                 gen_actions(),
                 chunk_size=chunk_size,
                 max_retries=3,
-                initial_backoff=2,
-                max_backoff=600,
                 request_timeout=120
             ),
             desc="Indexing",
